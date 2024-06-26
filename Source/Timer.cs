@@ -83,6 +83,7 @@ public class Timer
     /// <param name="onUpdate">An action that should fire each time the timer is updated. Takes the amount
     /// of time passed in seconds since the start of the timer's current loop.</param>
     /// <param name="isLooped">Whether the timer should repeat after executing.</param>
+    /// <param name="smoothLoop">When true, the restart point takes the remaining delta time into account which ensures each OnComplete has (almost) the same interval.</param>
     /// <param name="useRealTime">Whether the timer uses real-time(i.e. not affected by pauses,
     /// slow/fast motion) or game-time(will be affected by pauses and slow/fast-motion).</param>
     /// <param name="autoDestroyOwner">An object to attach this timer to. After the object is destroyed,
@@ -91,7 +92,7 @@ public class Timer
     /// after the parent has been destroyed.</param>
     /// <returns>A timer object that allows you to examine stats and stop/resume progress.</returns>
     public static Timer Register(float duration, Action onComplete, Action<float> onUpdate = null,
-        bool isLooped = false, bool useRealTime = false, MonoBehaviour autoDestroyOwner = null)
+        bool isLooped = false, bool smoothLoop, bool useRealTime = false, MonoBehaviour autoDestroyOwner = null)
     {
         // create a manager object to update all the timers if one does not already exist.
         if (Timer._manager == null)
@@ -108,7 +109,7 @@ public class Timer
             }
         }
 
-        Timer timer = new Timer(duration, onComplete, onUpdate, isLooped, useRealTime, autoDestroyOwner);
+        Timer timer = new Timer(duration, onComplete, onUpdate, isLooped, smoothLoop, useRealTime, autoDestroyOwner);
         Timer._manager.RegisterTimer(timer);
         return timer;
     }
@@ -314,18 +315,21 @@ public class Timer
     private readonly MonoBehaviour _autoDestroyOwner;
     private readonly bool _hasAutoDestroyOwner;
 
+    private bool _smoothLoop;
+
     #endregion
 
     #region Private Constructor (use static Register method to create new timer)
 
     private Timer(float duration, Action onComplete, Action<float> onUpdate,
-        bool isLooped, bool usesRealTime, MonoBehaviour autoDestroyOwner)
+        bool isLooped, bool smoothLoop, bool usesRealTime, MonoBehaviour autoDestroyOwner)
     {
         this.duration = duration;
         this._onComplete = onComplete;
         this._onUpdate = onUpdate;
 
         this.isLooped = isLooped;
+        this._smoothLoop = smoothLoop;
         this.usesRealTime = usesRealTime;
 
         this._autoDestroyOwner = autoDestroyOwner;
@@ -349,11 +353,6 @@ public class Timer
         return this._startTime + this.duration;
     }
 
-    private float GetTimeDelta()
-    {
-        return this.GetWorldTime() - this._lastUpdateTime;
-    }
-
     private void Update()
     {
         if (this.isDone)
@@ -361,23 +360,24 @@ public class Timer
             return;
         }
 
+        var worldTime = this.GetWorldTime();
         if (this.isPaused)
         {
-            this._startTime += this.GetTimeDelta();
-            this._lastUpdateTime = this.GetWorldTime();
+            this._startTime += worldTime - this._lastUpdateTime;;
+            this._lastUpdateTime = worldTime;
             return;
         }
 
-        this._lastUpdateTime = this.GetWorldTime();
+        this._lastUpdateTime = worldTime;
 
         if (this._onUpdate != null)
         {
             this._onUpdate(this.GetTimeElapsed());
         }
 
-        if (this.GetWorldTime() >= this.GetFireTime())
+        var fireTime = this.GetFireTime();
+        if (worldTime >= fireTime)
         {
-
             if (this._onComplete != null)
             {
                 this._onComplete();
@@ -385,7 +385,7 @@ public class Timer
 
             if (this.isLooped)
             {
-                this._startTime = this.GetWorldTime();
+                this._startTime = _smoothLoop ? fireTime : worldTime;
             }
             else
             {
@@ -403,7 +403,7 @@ public class Timer
     /// This will be instantiated the first time you create a timer -- you do not need to add it into the
     /// scene manually.
     /// </summary>
-    private class TimerManager : MonoBehaviour
+    public class TimerManager : MonoBehaviour
     {
         private List<Timer> _timers = new List<Timer>();
 
@@ -415,7 +415,7 @@ public class Timer
             this._timersToAdd.Add(timer);
         }
 
-        public void CancelAllTimers()
+        internal void CancelAllTimers()
         {
             foreach (Timer timer in this._timers)
             {
@@ -426,7 +426,7 @@ public class Timer
             this._timersToAdd = new List<Timer>();
         }
 
-        public void PauseAllTimers()
+        internal void PauseAllTimers()
         {
             foreach (Timer timer in this._timers)
             {
@@ -434,7 +434,7 @@ public class Timer
             }
         }
 
-        public void ResumeAllTimers()
+        internal void ResumeAllTimers()
         {
             foreach (Timer timer in this._timers)
             {
