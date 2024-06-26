@@ -1,5 +1,6 @@
 {
-    "name": "Unity Timer",
+    "name": "UniTimer",
+    "rootNamespace": "",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

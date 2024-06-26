@@ -3,6 +3,24 @@ I forked this repo and did some changes:
 - Added a `smoothLoop` parameter to make each `OnComplete` call has the (almost) same time interval.
 - Made `TimerManager` public, so it can be manually initialized. 
 
+Without smooth:
+```
+timer fired: 1.001698
+timer fired: 1.002163
+timer fired: 1.000666
+timer fired: 1.00287
+timer fired: 1.002351
+```
+
+Smooth Loop:
+```
+timer fired: 1.001881
+timer fired: 0.998383
+timer fired: 1.000206
+timer fired: 0.9999044
+timer fired: 1.001439
+```
+
 # Unity Timer
 
 Run actions after a delay in Unity3D.
