@@ -1,6 +1,6 @@
 {
-  "name": "com.akbiggs.unitytimer",
-  "version": "0.2",
+  "name": "com.sevensth.unitimer",
+  "version": "1.0.0",
   "displayName": "UniTimer",
   "description": "Run actions after a delay in Unity3D.",
   "unity": "2018.1",
@@ -9,7 +9,7 @@
   ],
   "author": {
     "name": "Sven Song",
-    "url": "https://github.com/sevensth/UnityTimer.git"
+    "url": "https://github.com/sevensth/UnityTimer"
   },
   "contributors": []
 }
