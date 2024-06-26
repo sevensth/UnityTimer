@@ -1,3 +1,8 @@
+# Forked and modified
+I forked this repo and did some changes:
+- Added a `smoothLoop` parameter to make each `OnComplete` call has the (almost) same time interval.
+- Made `TimerManager` public, so it can be manually initialized. 
+
 # Unity Timer
 
 Run actions after a delay in Unity3D.
